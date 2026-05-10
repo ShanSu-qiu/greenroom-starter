@@ -107,7 +107,7 @@ export function ShowsList({ rows }: { rows: ShowRow[] }) {
         <div className="space-y-8">
           {months.map(({ month, rows }) => (
             <section key={month}>
-              <div className="flex items-baseline justify-between mb-1 px-1">
+              <div className="flex items-baseline justify-between mb-1 px-1 sticky top-0 bg-canvas/95 backdrop-blur-sm z-10 py-2 -my-1">
                 <h3 className="text-[13px] font-semibold text-ink-900">
                   {month}
                 </h3>

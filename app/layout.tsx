@@ -4,6 +4,7 @@ import { GeistMono } from "geist/font/mono";
 import { Fraunces } from "next/font/google";
 import "./globals.css";
 import { Sidebar } from "@/components/layout/sidebar";
+import { CommandPaletteData } from "@/components/command-palette/command-data";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -70,6 +71,7 @@ export default function RootLayout({
       <body className="min-h-full flex font-sans">
         <Sidebar />
         <main className="flex-1 overflow-auto relative">{children}</main>
+        <CommandPaletteData />
       </body>
     </html>
   );
