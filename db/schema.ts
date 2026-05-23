@@ -333,3 +333,5 @@ export type Recoup = {
 };
 
 export type SettlementStage = Settlement["status"];
+
+export * from "./schema-canonical";

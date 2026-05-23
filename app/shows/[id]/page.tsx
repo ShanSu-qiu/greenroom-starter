@@ -6,8 +6,12 @@ import {
   AlertCircle,
   Clock,
   TrendingUp,
+  Mail,
 } from "lucide-react";
 import { getShowById } from "@/lib/queries";
+import { getDealReviewData, getShowDealView } from "@/lib/queries-canonical";
+import DealReviewSection from "./_components/deal-review-section";
+import AmbiguityBanner from "./_components/ambiguity-banner";
 import {
   Card,
   CardContent,
@@ -57,6 +61,9 @@ export default async function ShowDetailPage({
     expenses,
     comps,
   } = data;
+
+  const reviewData = deal ? await getDealReviewData(deal.id) : null;
+  const dealView = deal ? await getShowDealView(show.id) : null;
 
   const grossSoFar = ticketSales.reduce((sum, t) => sum + t.gross, 0);
   const totalFees = ticketSales.reduce((sum, t) => sum + t.fees, 0);
@@ -153,102 +160,123 @@ export default async function ShowDetailPage({
           </div>
         )}
 
+        {dealView && (
+          <div className="mb-5 mt-1">
+            <AmbiguityBanner unresolvedCount={dealView.unresolvedCount} />
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-2">
           {/* Deal terms */}
           <Card className="md:col-span-2">
             <CardHeader>
-              <div>
-                <CardTitle>Deal terms</CardTitle>
-                <CardDescription>
-                  What was negotiated. Mariana enters this from the email
-                  thread with the agent.
-                </CardDescription>
+              <div className="flex items-center gap-2">
+                <Mail className="h-3.5 w-3.5 text-ink-400" />
+                <div>
+                  <CardTitle>From agent email (original)</CardTitle>
+                  <CardDescription>
+                    What was negotiated. Mariana enters this from the email
+                    thread with the agent.
+                  </CardDescription>
+                </div>
               </div>
               {deal && <DealTypeBadge type={deal.dealType} />}
             </CardHeader>
             <CardContent className="space-y-5">
               {deal ? (
-                <>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <Field
-                      label="Guarantee"
-                      mono
-                      value={
-                        deal.guaranteeAmount != null
-                          ? formatMoney(deal.guaranteeAmount)
-                          : "—"
-                      }
-                    />
-                    <Field
-                      label="Percentage"
-                      mono
-                      value={
-                        deal.percentage != null
-                          ? `${(deal.percentage * 100).toFixed(0)}% ${deal.percentageBasis ? `of ${deal.percentageBasis}` : ""}`
-                          : "—"
-                      }
-                    />
-                    <Field
-                      label="Expense cap"
-                      mono
-                      value={
-                        deal.expenseCap != null
-                          ? formatMoney(deal.expenseCap)
-                          : "—"
-                      }
-                    />
-                    <Field
-                      label="Hospitality cap"
-                      mono
-                      value={
-                        deal.hospitalityCap != null
-                          ? formatMoney(deal.hospitalityCap)
-                          : "—"
-                      }
-                    />
-                  </div>
+                <div className="space-y-5">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      <Field
+                        label="Guarantee"
+                        mono
+                        value={
+                          deal.guaranteeAmount != null
+                            ? formatMoney(deal.guaranteeAmount)
+                            : "—"
+                        }
+                      />
+                      <Field
+                        label="Percentage"
+                        mono
+                        value={
+                          deal.percentage != null
+                            ? `${(deal.percentage * 100).toFixed(0)}% ${deal.percentageBasis ? `of ${deal.percentageBasis}` : ""}`
+                            : "—"
+                        }
+                      />
+                      <Field
+                        label="Expense cap"
+                        mono
+                        value={
+                          deal.expenseCap != null
+                            ? formatMoney(deal.expenseCap)
+                            : "—"
+                        }
+                      />
+                      <Field
+                        label="Hospitality cap"
+                        mono
+                        value={
+                          deal.hospitalityCap != null
+                            ? formatMoney(deal.hospitalityCap)
+                            : "—"
+                        }
+                      />
+                    </div>
 
-                  {bonuses.length > 0 && (
-                    <div className="rounded-lg ring-1 ring-brand-200/50 bg-brand-50/20 p-4">
-                      <div className="flex items-center gap-1.5 mb-2.5">
-                        <TrendingUp className="h-3.5 w-3.5 text-brand-700" />
-                        <div className="eyebrow text-[10px] text-brand-800">
-                          Bonuses & escalators (structured)
+                    {bonuses.length > 0 && (
+                      <div className="rounded-lg ring-1 ring-brand-200/50 bg-brand-50/20 p-4">
+                        <div className="flex items-center gap-1.5 mb-2.5">
+                          <TrendingUp className="h-3.5 w-3.5 text-brand-700" />
+                          <div className="eyebrow text-[10px] text-brand-800">
+                            Bonuses & escalators (structured)
+                          </div>
+                        </div>
+                        <ul className="space-y-2">
+                          {bonuses.map((b, i) => (
+                            <li
+                              key={i}
+                              className="text-[12.5px] text-ink-800 flex items-start gap-2"
+                            >
+                              <BonusBadge type={b.type} />
+                              <span className="leading-relaxed">{b.label}</span>
+                            </li>
+                          ))}
+                        </ul>
+                        <div className="text-[11px] text-ink-400 mt-3 leading-snug">
+                          Stored in{" "}
+                          <code className="font-mono text-[10px] bg-white/80 px-1 py-0.5 rounded ring-1 ring-ink-200/40">
+                            bonuses_json
+                          </code>
+                          . The in-app tool only reads structured bonuses — anything
+                          in the prose below is invisible to it.
                         </div>
                       </div>
-                      <ul className="space-y-2">
-                        {bonuses.map((b, i) => (
-                          <li
-                            key={i}
-                            className="text-[12.5px] text-ink-800 flex items-start gap-2"
-                          >
-                            <BonusBadge type={b.type} />
-                            <span className="leading-relaxed">{b.label}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      <div className="text-[11px] text-ink-400 mt-3 leading-snug">
-                        Stored in{" "}
-                        <code className="font-mono text-[10px] bg-white/80 px-1 py-0.5 rounded ring-1 ring-ink-200/40">
-                          bonuses_json
-                        </code>
-                        . The in-app tool only reads structured bonuses — anything
-                        in the prose below is invisible to it.
-                      </div>
+                    )}
+
+                  {deal.dealNotesFreetext && (
+                    <div className="border-l-2 border-ink-200/60 pl-3.5">
+                      <p className="text-[12px] text-ink-500 leading-relaxed" style={{ fontStyle: "italic" }}>
+                        {deal.dealNotesFreetext.length > 200
+                          ? `${deal.dealNotesFreetext.slice(0, 200)}...`
+                          : deal.dealNotesFreetext}
+                      </p>
                     </div>
                   )}
 
                   {deal.dealNotesFreetext && (
-                    <div>
-                      <div className="eyebrow text-[10px] text-ink-500 mb-2">
-                        Deal notes (free text — what Mariana actually trusts)
-                      </div>
-                      <div className="text-[13px] text-ink-800 bg-canvas-soft rounded-lg p-4 ring-1 ring-ink-200/50 leading-relaxed font-[450]" style={{ fontStyle: "italic" }}>
-                        {deal.dealNotesFreetext}
-                      </div>
+                    <div id="deal-review">
+                      <DealReviewSection
+                        dealId={deal.id}
+                        showId={show.id}
+                        prose={deal.dealNotesFreetext}
+                        canonical={reviewData?.canonicalDeal ?? null}
+                        ambiguities={reviewData?.ambiguities ?? []}
+                        agentResponses={dealView?.agentResponses ?? null}
+                      />
                     </div>
                   )}
-                </>
+                </div>
               ) : (
                 <div className="text-[13px] text-ink-400">
                   No deal entered yet.

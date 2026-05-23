@@ -12,7 +12,9 @@ import {
   Wallet,
   TrendingUp,
 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { getShowById } from "@/lib/queries";
+import { getShowDealView } from "@/lib/queries-canonical";
 import {
   Card,
   CardContent,
@@ -61,6 +63,16 @@ export default async function SettlePage({
       </div>
     );
   }
+
+  const dealView = await getShowDealView(show.id);
+  const CONFIRM_FIELDS = ["dealType", "guaranteeAmount", "percentage", "expenseCap", "hospitalityCap"] as const;
+  const totalFieldCount = CONFIRM_FIELDS.length;
+  const dualConfirmedCount = dealView.canonical
+    ? CONFIRM_FIELDS.filter((key) => {
+        const val = dealView.canonical?.[key as keyof typeof dealView.canonical];
+        return val != null && dealView.agentResponses?.[key]?.action === "confirm";
+      }).length
+    : 0;
 
   const calc = calculateSettlement({
     deal,
@@ -125,6 +137,37 @@ export default async function SettlePage({
       {settlement && (
         <LifecycleBar settlement={settlement} disputedRecoups={disputedRecoups.length} />
       )}
+
+      {/* Deal confirmation status */}
+      <div className="mt-4 rounded-md ring-1 ring-ink-200/50 bg-white px-5 py-3.5 flex items-center justify-between">
+        <div className="text-[12.5px] text-ink-500">
+          {!dealView.canonical ? (
+            <span>Deal terms: not yet reviewed</span>
+          ) : dualConfirmedCount === totalFieldCount && dealView.unresolvedCount === 0 ? (
+            <span className="text-emerald-700 flex items-center gap-1.5">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              Deal terms: fully confirmed by both parties
+            </span>
+          ) : (
+            <span>
+              Deal terms: {dualConfirmedCount} of {totalFieldCount} dual-confirmed by venue and agent
+              {dealView.unresolvedCount > 0 && (
+                <> &middot; {dealView.unresolvedCount} unresolved ambiguit{dealView.unresolvedCount === 1 ? "y" : "ies"}</>
+              )}
+            </span>
+          )}
+        </div>
+        <Link
+          href={`/shows/${show.id}#deal-review`}
+          className={`text-[12px] font-medium inline-flex items-center gap-0.5 transition-colors ${
+            !dealView.canonical
+              ? "text-brand-700 hover:text-brand-800"
+              : "text-ink-500 hover:text-ink-900"
+          }`}
+        >
+          Review <ArrowRight className="h-3 w-3" />
+        </Link>
+      </div>
 
       <div className="space-y-6 mt-6">
         {!calc.supported ? (
